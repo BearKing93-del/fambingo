@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1a1035" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="FamBingo" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>FamBingo</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap');
+    :root {
+      --bg:#1a1035;--surface:#241848;--card:#2e2060;
+      --accent:#f7c948;--accent2:#e05aff;--green:#3dffa0;
+      --red:#ff5c5c;--text:#f0eaff;--muted:#8878b0;
+      --B:#4fa3e8;--I:#e05aff;--N:#f7c948;--G:#3dffa0;--O:#ff7a50;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);
+      min-height:100dvh;display:flex;flex-direction:column;align-items:center;
+      padding-bottom:env(safe-area-inset-bottom);overflow-x:hidden;}
+
+    /* Header */
+    header{width:100%;background:var(--surface);border-bottom:2px solid var(--accent);
+      padding:14px 20px 10px;display:flex;align-items:center;justify-content:space-between;
+      position:sticky;top:0;z-index:100;}
+    .logo{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.08em;
+      color:var(--accent);text-shadow:0 0 20px rgba(247,201,72,.4);}
+    .logo span{color:var(--accent2);}
+    .next-timer{text-align:right;font-size:.72rem;color:var(--muted);line-height:1.4;}
+    .next-timer strong{display:block;font-size:1.1rem;color:var(--green);
+      font-family:'Bebas Neue',sans-serif;letter-spacing:.05em;}
+
+    /* Current ball */
+    .current-section{width:100%;max-width:460px;padding:24px 20px 12px;text-align:center;}
+    .ball-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.15em;
+      color:var(--muted);margin-bottom:10px;}
+    .big-ball{width:140px;height:140px;border-radius:50%;margin:0 auto 16px;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      border:4px solid currentColor;animation:popIn .5s cubic-bezier(.34,1.56,.64,1);
+      box-shadow:0 0 40px rgba(247,201,72,.2),inset 0 2px 8px rgba(255,255,255,.15);}
+    @keyframes popIn{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+    .big-ball .ball-letter{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;
+      letter-spacing:.1em;opacity:.9;}
+    .big-ball .ball-number{font-family:'Bebas Neue',sans-serif;font-size:3.2rem;line-height:1;}
+    .no-ball-yet{width:140px;height:140px;border-radius:50%;border:3px dashed var(--muted);
+      margin:0 auto 16px;display:flex;align-items:center;justify-content:center;
+      color:var(--muted);font-size:.85rem;text-align:center;padding:10px;}
+    .ball-count{font-size:.82rem;color:var(--muted);}
+    .ball-count strong{color:var(--text);}
+
+    /* Grid */
+    .columns-section{width:100%;max-width:460px;padding:4px 16px 16px;}
+    .columns-header{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:6px;}
+    .col-label{text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.5rem;
+      letter-spacing:.08em;padding:4px 0;border-radius:6px;}
+    .col-B{color:var(--B);}.col-I{color:var(--I);}.col-N{color:var(--N);}
+    .col-G{color:var(--G);}.col-O{color:var(--O);}
+    .columns-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+    .column{display:flex;flex-direction:column;gap:5px;}
+    .ball-chip{border-radius:8px;text-align:center;padding:5px 2px;
+      font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.04em;
+      background:var(--card);color:var(--muted);transition:all .3s ease;
+      border:1.5px solid transparent;}
+    .ball-chip.called{color:var(--bg);font-size:1.15rem;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+    .ball-chip.called.latest{animation:pulseChip 1.5s ease infinite;}
+    @keyframes pulseChip{0%,100%{box-shadow:0 0 8px 2px currentColor}50%{box-shadow:0 0 18px 6px currentColor}}
+    .ball-chip.col-B-chip.called{background:var(--B);border-color:var(--B);color:#fff;}
+    .ball-chip.col-I-chip.called{background:var(--I);border-color:var(--I);color:#fff;}
+    .ball-chip.col-N-chip.called{background:var(--N);border-color:var(--N);color:#1a1035;}
+    .ball-chip.col-G-chip.called{background:var(--G);border-color:var(--G);color:#1a1035;}
+    .ball-chip.col-O-chip.called{background:var(--O);border-color:var(--O);color:#fff;}
+
+    /* History */
+    .history-section{width:100%;max-width:460px;padding:0 16px 16px;}
+    .section-title{font-size:.7rem;text-transform:uppercase;letter-spacing:.14em;
+      color:var(--muted);margin-bottom:8px;}
+    .history-scroll{display:flex;flex-wrap:wrap;gap:6px;}
+    .history-pill{padding:3px 10px;border-radius:20px;font-size:.8rem;
+      font-family:'Bebas Neue',sans-serif;letter-spacing:.06em;
+      background:var(--card);border:1px solid;}
+    .ph-B{border-color:var(--B);color:var(--B);}
+    .ph-I{border-color:var(--I);color:var(--I);}
+    .ph-N{border-color:var(--N);color:var(--N);}
+    .ph-G{border-color:var(--G);color:var(--G);}
+    .ph-O{border-color:var(--O);color:var(--O);}
+
+    /* Buttons */
+    .actions{width:100%;max-width:460px;padding:8px 16px 24px;display:flex;gap:10px;}
+    .btn{flex:1;padding:14px;border:none;border-radius:12px;
+      font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.08em;
+      cursor:pointer;transition:all .2s;}
+    .btn:active{transform:scale(.97);}
+    .btn-restart{background:var(--red);color:#fff;box-shadow:0 4px 20px rgba(255,92,92,.3);}
+    .btn-notify{background:var(--surface);color:var(--accent);border:2px solid var(--accent);}
+    .btn-notify.on{opacity:.6;cursor:default;}
+
+    /* Status */
+    .notif-status{width:100%;max-width:460px;padding:0 16px 10px;
+      font-size:.75rem;color:var(--muted);text-align:center;display:flex;
+      align-items:center;justify-content:center;gap:6px;}
+    .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+    .notif-on .dot{background:var(--green);}
+    .notif-on{color:var(--green);}
+
+    /* Install banner */
+    #install-banner{display:none;position:fixed;bottom:20px;left:50%;
+      transform:translateX(-50%);background:var(--accent);color:var(--bg);
+      padding:12px 20px;border-radius:12px;font-size:.85rem;font-weight:700;
+      box-shadow:0 8px 30px rgba(0,0,0,.4);z-index:999;cursor:pointer;
+      text-align:center;max-width:340px;width:calc(100% - 32px);}
+
+    /* iOS install tip */
+    #ios-tip{display:none;background:var(--surface);border:1px solid var(--accent);
+      border-radius:12px;margin:0 16px 16px;padding:12px 16px;
+      font-size:.78rem;line-height:1.6;max-width:428px;width:calc(100% - 32px);}
+    #ios-tip strong{color:var(--accent);}
+
+    /* Overlay */
+    #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
+      z-index:200;align-items:center;justify-content:center;}
+    #overlay.show{display:flex;}
+    .modal{background:var(--surface);border:2px solid var(--accent);border-radius:20px;
+      padding:32px 28px;text-align:center;max-width:320px;width:90%;}
+    .modal h2{font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:var(--accent);
+      margin-bottom:8px;}
+    .modal p{color:var(--muted);font-size:.88rem;margin-bottom:20px;}
+    .modal .btn{width:100%;flex:none;}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Fam<span>Bingo</span></div>
+  <div class="next-timer">
+    <strong id="countdown">--:--</strong>
+    next ball
+  </div>
+</header>
+
+<div class="current-section">
+  <div class="ball-label">Current Ball</div>
+  <div id="current-ball-display">
+    <div class="no-ball-yet">Waiting for<br>first draw…</div>
+  </div>
+  <div class="ball-count" id="ball-count"></div>
+</div>
+
+<div class="columns-section">
+  <div class="columns-header">
+    <div class="col-label col-B">B</div>
+    <div class="col-label col-I">I</div>
+    <div class="col-label col-N">N</div>
+    <div class="col-label col-G">G</div>
+    <div class="col-label col-O">O</div>
+  </div>
+  <div class="columns-grid" id="columns-grid"></div>
+</div>
+
+<div class="history-section">
+  <div class="section-title">Call History (newest first)</div>
+  <div class="history-scroll" id="history-scroll">
+    <span style="color:var(--muted);font-size:.8rem;">No balls called yet.</span>
+  </div>
+</div>
+
+<div class="notif-status" id="notif-status">
+  <span class="dot"></span>
+  <span id="notif-text">Notifications off — tap Enable to get hourly alerts</span>
+</div>
+
+<div class="actions">
+  <button class="btn btn-restart" onclick="confirmRestart()">🔄 Restart</button>
+  <button class="btn btn-notify" id="notify-btn" onclick="requestNotifications()">🔔 Enable Alerts</button>
+</div>
+
+<div id="ios-tip">
+  <strong>📱 Install on iPhone/iPad:</strong> Tap the <strong>Share</strong> button (box with arrow) in Safari, then tap <strong>"Add to Home Screen"</strong> for the best experience and background alerts.
+</div>
+
+<div id="install-banner">📲 Tap to install FamBingo on your home screen</div>
+
+<!-- Restart confirm modal -->
+<div id="overlay">
+  <div class="modal">
+    <h2>🎉 Bingo!</h2>
+    <p>Someone got Bingo! Reset all called balls and start a fresh game?</p>
+    <button class="btn btn-restart" onclick="doRestart()">Yes, Start New Game</button>
+    <br><br>
+    <button class="btn btn-notify" style="width:100%;flex:none;" onclick="closeOverlay()">Cancel</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════
+const COLUMNS = {
+  B:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
+  I:[16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],
+  N:[31,32,33,34,35,36,37,38,39,40,41,42,43,44,45],
+  G:[46,47,48,49,50,51,52,53,54,55,56,57,58,59,60],
+  O:[61,62,63,64,65,66,67,68,69,70,71,72,73,74,75],
+};
+const LETTERS = ['B','I','N','G','O'];
+const HOUR_MS = 60 * 60 * 1000;
+
+// ══════════════════════════════════
+// STATE
+// ══════════════════════════════════
+let calledBalls = [];
+let nextCallTime = null;
+let timerInterval = null;
+let swReg = null;
+let notifOn = false;
+
+// ══════════════════════════════════
+// PERSISTENCE
+// ══════════════════════════════════
+function save() {
+  localStorage.setItem('fb_called', JSON.stringify(calledBalls));
+  localStorage.setItem('fb_next', nextCallTime ? String(nextCallTime) : '');
+}
+function load() {
+  try { calledBalls = JSON.parse(localStorage.getItem('fb_called') || '[]'); } catch(e){ calledBalls=[]; }
+  const n = localStorage.getItem('fb_next');
+  nextCallTime = n ? parseInt(n) : null;
+}
+
+// ══════════════════════════════════
+// BALL LOGIC
+// ══════════════════════════════════
+function getAllBalls() {
+  const all = [];
+  for (const [letter, nums] of Object.entries(COLUMNS))
+    nums.forEach(n => all.push({letter, number:n}));
+  return all;
+}
+function drawBall() {
+  const remaining = getAllBalls().filter(b => !calledBalls.some(c => c.number === b.number));
+  if (!remaining.length) return null;
+  return remaining[Math.floor(Math.random() * remaining.length)];
+}
+function callNextBall() {
+  const ball = drawBall();
+  if (!ball) { alert('All 75 balls have been called! Restart to play again.'); return; }
+  calledBalls.push(ball);
+  nextCallTime = Date.now() + HOUR_MS;
+  save();
+  renderAll();
+  fireNotification(ball);
+  scheduleSwNotification(ball);
+}
+
+// ══════════════════════════════════
+// RENDER
+// ══════════════════════════════════
+function renderAll() {
+  renderBall();
+  renderGrid();
+  renderHistory();
+  renderCount();
+}
+function renderBall() {
+  const el = document.getElementById('current-ball-display');
+  if (!calledBalls.length) {
+    el.innerHTML = '<div class="no-ball-yet">Waiting for<br>first draw…</div>';
+    return;
+  }
+  const b = calledBalls[calledBalls.length-1];
+  const c = `var(--${b.letter})`;
+  el.innerHTML = `<div class="big-ball" style="color:${c};border-color:${c}">
+    <span class="ball-letter">${b.letter}</span>
+    <span class="ball-number">${b.number}</span>
+  </div>`;
+}
+function renderCount() {
+  const el = document.getElementById('ball-count');
+  el.innerHTML = calledBalls.length
+    ? `<strong>${calledBalls.length}</strong> of 75 balls called`
+    : '';
+}
+function renderGrid() {
+  const grid = document.getElementById('columns-grid');
+  grid.innerHTML = '';
+  const last = calledBalls[calledBalls.length-1];
+  LETTERS.forEach(letter => {
+    const col = document.createElement('div');
+    col.className = 'column';
+    COLUMNS[letter].forEach(num => {
+      const chip = document.createElement('div');
+      chip.className = `ball-chip col-${letter}-chip`;
+      chip.textContent = num;
+      const isCalled = calledBalls.some(b => b.number===num);
+      if (isCalled) chip.classList.add('called');
+      if (last && last.number===num) chip.classList.add('latest');
+      col.appendChild(chip);
+    });
+    grid.appendChild(col);
+  });
+}
+function renderHistory() {
+  const el = document.getElementById('history-scroll');
+  if (!calledBalls.length) {
+    el.innerHTML = '<span style="color:var(--muted);font-size:.8rem;">No balls called yet.</span>';
+    return;
+  }
+  el.innerHTML = [...calledBalls].reverse()
+    .map(b => `<span class="history-pill ph-${b.letter}">${b.letter}${b.number}</span>`)
+    .join('');
+}
+
+// ══════════════════════════════════
+// TIMER
+// ══════════════════════════════════
+function startTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(tick, 1000);
+  tick();
+}
+function tick() {
+  if (!nextCallTime) {
+    nextCallTime = Date.now() + HOUR_MS;
+    save();
+  }
+  const rem = Math.max(0, nextCallTime - Date.now());
+  const m = Math.floor(rem / 60000);
+  const s = Math.floor((rem % 60000) / 1000);
+  document.getElementById('countdown').textContent =
+    `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  if (rem <= 0) callNextBall();
+}
+
+// ══════════════════════════════════
+// NOTIFICATIONS
+// ══════════════════════════════════
+async function requestNotifications() {
+  if (!('Notification' in window)) {
+    showIosTip(); return;
+  }
+  const perm = await Notification.requestPermission();
+  notifOn = perm === 'granted';
+  updateNotifUI();
+  if (notifOn) await registerSW();
+}
+function fireNotification(ball) {
+  if (!notifOn) return;
+  const opts = {
+    body: `${ball.letter}${ball.number} was just called! Check your card.`,
+    icon: 'icon-192.png', badge:'icon-192.png',
+    tag:'bingo-ball', renotify:true, vibrate:[200,100,200]
+  };
+  if (swReg) swReg.showNotification('🎱 FamBingo — New Ball!', opts);
+  else if (Notification.permission==='granted')
+    new Notification('🎱 FamBingo — New Ball!', opts);
+}
+function scheduleSwNotification(ball) {
+  // Tell the SW to fire a notification ~1hr from now (even if app is closed on Android)
+  if (swReg && swReg.active) {
+    swReg.active.postMessage({
+      type: 'SCHEDULE_NOTIFICATION',
+      ball,
+      delayMs: HOUR_MS - 5000  // fire 5s before next draw
+    });
+  }
+}
+function updateNotifUI() {
+  const status = document.getElementById('notif-status');
+  const text = document.getElementById('notif-text');
+  const btn = document.getElementById('notify-btn');
+  if (notifOn) {
+    status.className = 'notif-status notif-on';
+    text.textContent = 'Alerts enabled — you\'ll be notified each hour';
+    btn.textContent = '🔔 Alerts ON';
+    btn.classList.add('on');
+  } else {
+    status.className = 'notif-status';
+    text.textContent = 'Notifications off — tap Enable to get hourly alerts';
+    btn.classList.remove('on');
+  }
+}
+function showIosTip() {
+  const tip = document.getElementById('ios-tip');
+  tip.style.display = 'block';
+}
+
+// ══════════════════════════════════
+// SERVICE WORKER
+// ══════════════════════════════════
+async function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    swReg = await navigator.serviceWorker.register('sw.js');
+    console.log('SW registered');
+  } catch(e) { console.log('SW failed:', e); }
+}
+
+// ══════════════════════════════════
+// RESTART
+// ══════════════════════════════════
+function confirmRestart() {
+  document.getElementById('overlay').classList.add('show');
+}
+function closeOverlay() {
+  document.getElementById('overlay').classList.remove('show');
+}
+function doRestart() {
+  calledBalls = [];
+  nextCallTime = null;
+  save();
+  closeOverlay();
+  // Draw first ball immediately, then 1hr countdown begins
+  callNextBall();
+}
+
+// ══════════════════════════════════
+// INSTALL PROMPT (Android Chrome)
+// ══════════════════════════════════
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const banner = document.getElementById('install-banner');
+  banner.style.display = 'block';
+  banner.onclick = async () => {
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    banner.style.display = 'none';
+    deferredPrompt = null;
+  };
+});
+
+// ══════════════════════════════════
+// INIT
+// ══════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  load();
+
+  if (!nextCallTime && calledBalls.length === 0) {
+    // Brand new game — draw first ball immediately, then start 1hr countdown
+    callNextBall();
+  } else if (nextCallTime && Date.now() >= nextCallTime) {
+    // Time already passed — draw the overdue ball now
+    callNextBall();
+  } else {
+    renderAll();
+  }
+
+  startTimer();
+
+  // Check existing permission
+  if ('Notification' in window && Notification.permission === 'granted') {
+    notifOn = true;
+    updateNotifUI();
+    await registerSW();
+  }
+
+  // Show iOS tip automatically if on iOS and not installed
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true;
+  if (isIos && !isStandalone) showIosTip();
+});
+
+// Re-check on app resume
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && nextCallTime && Date.now() >= nextCallTime) {
+    callNextBall();
+  }
+});
+</script>
+</body>
+</html>
